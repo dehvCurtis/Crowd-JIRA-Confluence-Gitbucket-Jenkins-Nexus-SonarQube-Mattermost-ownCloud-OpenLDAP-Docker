@@ -216,7 +216,3 @@ Open ownCloud and configure LDAP authentication.
 - Base DN: `dc=example,dc=org`
 
 
-## Contribution
-
-This is an open source software licensed under Apache-2.0.
-Feel free to open issues or pull requests.
