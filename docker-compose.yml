@@ -1,0 +1,101 @@
+version: "2"
+
+services:
+  nginx:
+    build: nginx
+    ports:
+      - "80:80"
+    environment:
+      REVERSE_PROXY_DOMAIN_NAME: ${REVERSE_PROXY_DOMAIN_NAME}
+
+  crowd:
+    image: blacklabelops/crowd
+    volumes:
+      - ${PERSISTENT_VOLUMES_ROOT}/crowd-data:/var/atlassian/crowd
+    environment:
+      CROWD_URL: http://localhost:8095/crowd
+      CROWD_PROXY_NAME: crowd.${REVERSE_PROXY_DOMAIN_NAME}
+      CROWD_PROXY_PORT: 443
+      CROWD_PROXY_SCHEME: https
+      CROWD_PROXY_SECURE: "true"
+      LOGIN_BASE_URL: https://crowd.${REVERSE_PROXY_DOMAIN_NAME}
+      CROWD_CONTEXT: crowd
+
+  jira:
+    image: cptactionhank/atlassian-jira-software
+    environment:
+      X_PROXY_NAME: jira.${REVERSE_PROXY_DOMAIN_NAME}
+      X_PROXY_PORT: 443
+      X_PROXY_SCHEME: https
+    volumes:
+      - ${PERSISTENT_VOLUMES_ROOT}/jira-data:/var/atlassian/jira
+      - ${PERSISTENT_VOLUMES_ROOT}/jira-logs:/opt/atlassian/jira/logs
+
+  confluence:
+    image: cptactionhank/atlassian-confluence
+    environment:
+      X_PROXY_NAME: confluence.${REVERSE_PROXY_DOMAIN_NAME}
+      X_PROXY_PORT: 443
+      X_PROXY_SCHEME: https
+    volumes:
+      - ${PERSISTENT_VOLUMES_ROOT}/confluence-data:/var/atlassian/confluence
+
+  gitbucket:
+    image: f99aq8ove/gitbucket
+    environment:
+      GITBUCKET_DB_URL: jdbc:postgresql://${DATABASE_HOST}/gitbucket
+      GITBUCKET_DB_USER: gitbucket
+      GITBUCKET_DB_PASSWORD: gitbucket
+    volumes:
+      - ${PERSISTENT_VOLUMES_ROOT}/gitbucket-data:/gitbucket
+
+  jenkins:
+    image: jenkins
+    volumes:
+      - ${PERSISTENT_VOLUMES_ROOT}/jenkins-data:/var/jenkins_home
+
+  nexus:
+    image: sonatype/nexus3
+    volumes:
+      - ${PERSISTENT_VOLUMES_ROOT}/nexus-data:/nexus-data
+
+  sonarqube:
+    image: sonarqube
+    environment:
+      - SONARQUBE_JDBC_USERNAME=sonarqube
+      - SONARQUBE_JDBC_PASSWORD=sonarqube
+      - SONARQUBE_JDBC_URL=jdbc:postgresql://${DATABASE_HOST}:5432/sonarqube
+    volumes:
+      - ${PERSISTENT_VOLUMES_ROOT}/sonarqube-conf:/opt/sonarqube/conf
+      - ${PERSISTENT_VOLUMES_ROOT}/sonarqube-data:/opt/sonarqube/data
+      - ${PERSISTENT_VOLUMES_ROOT}/sonarqube-extensions:/opt/sonarqube/extensions
+      - ${PERSISTENT_VOLUMES_ROOT}/sonarqube-plugins:/opt/sonarqube/lib/bundled-plugins
+
+  mattermost:
+    image: mattermost/mattermost-prod-app
+    environment:
+      MATTERMOST_ENABLE_SSL: "true"
+      DB_HOST: ${DATABASE_HOST}
+      MM_DBNAME: mattermost
+      MM_USERNAME: mattermost
+      MM_PASSWORD: mattermost
+    volumes:
+      - ${PERSISTENT_VOLUMES_ROOT}/mattermost-data:/mattermost/data
+      - ${PERSISTENT_VOLUMES_ROOT}/mattermost-config:/mattermost/config
+
+  owncloud:
+    image: owncloud
+    volumes:
+      - ${PERSISTENT_VOLUMES_ROOT}/owncloud-data:/var/www/html/data
+      - ${PERSISTENT_VOLUMES_ROOT}/owncloud-config:/var/www/html/config
+      - ${PERSISTENT_VOLUMES_ROOT}/owncloud-apps:/var/www/html/apps
+
+  ldap:
+    image: osixia/openldap
+    volumes:
+      - ${PERSISTENT_VOLUMES_ROOT}/ldap-data:/var/lib/ldap
+      - ${PERSISTENT_VOLUMES_ROOT}/ldap-config:/etc/ldap/slapd.d
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
