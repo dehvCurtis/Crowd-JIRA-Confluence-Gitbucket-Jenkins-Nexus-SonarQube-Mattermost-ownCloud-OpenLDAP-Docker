@@ -1,4 +1,4 @@
-# DevOps Compose [![CircleCI](https://circleci.com/gh/int128/devops-compose.svg?style=shield)](https://circleci.com/gh/int128/devops-compose)
+# DevOps Compose
 
 A compose of following Docker containers:
 
